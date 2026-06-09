@@ -89,6 +89,11 @@ Ensure you have **JDK 17 or higher** installed.
 ```
 The application starts on port `8080`. The H2 database console is at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:membershipdb`, User: `sa`, Password: `password`).
 
+### 🗄️ Database Extensibility
+This project currently uses an **in-memory H2 database** for zero-setup execution out of the box. However, because the application is built using standard **Spring Data JPA & Hibernate**, the database layer is fully decoupled. It can be easily extended to support production-ready databases like **PostgreSQL, MySQL, or SQL Server** simply by:
+1. Adding the corresponding database driver dependency to [pom.xml](file:///Users/abhranilbhattacharjee/Public/Personal%20Projects/FirstClubMembership/pom.xml).
+2. Updating the database connection properties (`spring.datasource.url`, `username`, `password`, and `dialect`) inside [application.properties](file:///Users/abhranilbhattacharjee/Public/Personal%20Projects/FirstClubMembership/src/main/resources/application.properties).
+
 ---
 
 ## 📋 Complete API Reference (CURL Commands)

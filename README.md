@@ -57,6 +57,17 @@ classDiagram
 
 ---
 
+## ⏳ Dynamic Membership Expiry Validation
+
+To guarantee real-time data consistency and prevent users from enjoying membership benefits beyond their billing cycle, the system handles subscription expiry **dynamically (on-demand)** during lookup rather than relying solely on offline cron jobs.
+
+### Key Workflows:
+1. **Validation on Fetch**: Any request for the user's active membership (such as checkout perk application, tier evaluations, or retrieving user perks) calls `SubscriptionService.getActiveSubscription(userId)`.
+2. **Dynamic Expiration**: If the current system time (`LocalDateTime.now()`) is after the subscription's `endDate`, the subscription's status is immediately updated to `EXPIRED` in the database, and the service returns an empty result.
+3. **No Race Conditions**: Checking validity at the exact moment benefits are requested avoids stale windows where a user could receive discounts or free shipping after their subscription has ended.
+
+---
+
 ## ⚡ Concurrency & Thread-Safety
 
 To ensure enterprise-grade stability under concurrent load:

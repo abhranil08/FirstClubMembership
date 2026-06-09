@@ -3,8 +3,6 @@ package com.firstclub.membership.service;
 import com.firstclub.membership.dto.CheckoutRequestDto;
 import com.firstclub.membership.dto.CheckoutResponseDto;
 import com.firstclub.membership.entity.UserSubscription;
-import com.firstclub.membership.enums.SubscriptionStatus;
-import com.firstclub.membership.repository.UserSubscriptionRepository;
 import com.firstclub.membership.service.benefit.BenefitApplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,10 +16,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CheckoutService {
 
-    private final UserSubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
     private final List<BenefitApplier> benefitAppliers;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CheckoutResponseDto applyMembershipBenefits(CheckoutRequestDto request) {
         CheckoutResponseDto response = CheckoutResponseDto.builder()
                 .originalPrice(request.getOriginalPrice())
@@ -30,7 +28,7 @@ public class CheckoutService {
                 .appliedBenefits(new ArrayList<>())
                 .build();
 
-        Optional<UserSubscription> activeSub = subscriptionRepository.findByUserIdAndStatus(request.getUserId(), SubscriptionStatus.ACTIVE);
+        Optional<UserSubscription> activeSub = subscriptionService.getActiveSubscription(request.getUserId());
         if (activeSub.isPresent()) {
             activeSub.get().getTier().getTierBenefits().forEach(tierBenefit -> {
                 benefitAppliers.stream()

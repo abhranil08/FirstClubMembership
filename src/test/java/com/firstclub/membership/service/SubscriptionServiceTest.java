@@ -206,5 +206,19 @@ class SubscriptionServiceTest {
         assertFalse(response.isHasEarlyAccess());
         assertTrue(response.getAllBenefits().isEmpty());
     }
+
+    @Test
+    void getActiveSubscription_ExpiresSubscription_IfEndDateInPast() {
+        activeSubscription.setEndDate(LocalDateTime.now().minusMinutes(5));
+        when(subscriptionRepository.findByUserIdAndStatus(1L, SubscriptionStatus.ACTIVE)).thenReturn(Optional.of(activeSubscription));
+        when(subscriptionRepository.save(any(UserSubscription.class))).thenReturn(activeSubscription);
+
+        Optional<UserSubscription> response = subscriptionService.getActiveSubscription(1L);
+
+        assertTrue(response.isEmpty());
+        assertEquals(SubscriptionStatus.EXPIRED, activeSubscription.getStatus());
+        verify(subscriptionRepository, times(1)).save(activeSubscription);
+    }
 }
+
 

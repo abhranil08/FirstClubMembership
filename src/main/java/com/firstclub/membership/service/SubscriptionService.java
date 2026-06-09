@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,12 +29,26 @@ public class SubscriptionService {
     private final MembershipTierRepository tierRepository;
 
     @Transactional
+    public Optional<UserSubscription> getActiveSubscription(Long userId) {
+        Optional<UserSubscription> optionalSub = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE);
+        if (optionalSub.isPresent()) {
+            UserSubscription sub = optionalSub.get();
+            if (LocalDateTime.now().isAfter(sub.getEndDate())) {
+                sub.setStatus(SubscriptionStatus.EXPIRED);
+                subscriptionRepository.save(sub);
+                return Optional.empty();
+            }
+        }
+        return optionalSub;
+    }
+
+    @Transactional
     public SubscriptionResponseDto subscribe(SubscriptionRequestDto request) {
         User user = userRepository.findByIdForUpdate(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check if user already has an active subscription
-        subscriptionRepository.findByUserIdAndStatus(user.getId(), SubscriptionStatus.ACTIVE)
+        getActiveSubscription(user.getId())
                 .ifPresent(sub -> {
                     throw new ValidationException("User already has an active subscription");
                 });
@@ -113,14 +128,14 @@ public class SubscriptionService {
     }
 
     public SubscriptionResponseDto getCurrentSubscription(Long userId) {
-        UserSubscription subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        UserSubscription subscription = getActiveSubscription(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for user"));
         return mapToDto(subscription);
     }
 
     public UserPerksDto getUserPerks(Long userId) {
         // Retrieve the user's active subscription if any
-        UserSubscription subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        UserSubscription subscription = getActiveSubscription(userId)
                 .orElse(null);
 
         if (subscription == null) {

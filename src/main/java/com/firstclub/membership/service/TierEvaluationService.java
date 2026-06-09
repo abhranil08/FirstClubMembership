@@ -35,8 +35,7 @@ public class TierEvaluationService {
 
     @Transactional
     public void evaluateUserTier(Long userId) {
-        // 1. Get current active subscription
-        Optional<UserSubscription> optionalSubscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE);
+        Optional<UserSubscription> optionalSubscription = subscriptionService.getActiveSubscription(userId);
         if (optionalSubscription.isEmpty()) {
             log.info("No active subscription for user {}. Skipping tier evaluation.", userId);
             return;

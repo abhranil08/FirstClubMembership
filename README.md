@@ -74,6 +74,10 @@ To ensure enterprise-grade stability under concurrent load:
 1. **Distributed Pessimistic Locking**: We coordinate writing locks on the `User` record via `SELECT FOR UPDATE` at the database level (`userRepository.findByIdForUpdate`). This blocks concurrent transactions attempting to subscribe, cancel, or auto-evaluate the same user's tier across multiple nodes/application instances, preventing race conditions.
 2. **Optimistic Locking**: Mapped via `@Version` inside `BaseEntity` to safeguard records from dirty writes.
 
+### 🚫 Why not JVM-level Locks (e.g., `ReentrantLock`, `synchronized`)?
+* **Distributed Environments**: JVM-level concurrency utilities only synchronize threads within a single JVM process. In a distributed cloud environment where multiple instances of the service run behind a load balancer, concurrent requests for a single user could be processed by different nodes. JVM-level locks cannot coordinate across these distinct processes, allowing race conditions to occur.
+* **Global Coordination via DB**: Leveraging database-level locking (`SELECT FOR UPDATE`) locks the specific user row across all application instances, turning the database into the single source of coordination. This avoids the operational overhead and complexity of configuring external distributed lock managers (e.g., Redisson/Redis or ZooKeeper).
+
 ---
 
 ## 🚀 How to Run the Project
